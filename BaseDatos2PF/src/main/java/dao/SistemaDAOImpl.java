@@ -171,4 +171,55 @@ public class SistemaDAOImpl {
         
         return resultados.toString();
     }
+    
+    /**
+     * MEJORA 2: Verifica si un elector ya emitió su voto en una elección específica.
+     * Retorna true si ya votó, false si es su primera vez.
+     */
+    public boolean yaVoto(int idEleccion, int idVotante) {
+        boolean existe = false;
+        java.sql.Connection con = modelo_conexion.ConexionDB.getConexion();
+        
+        // Buscamos si existe al menos un registro con ese ID de elección y votante
+        String sql = "SELECT 1 FROM tb_voto WHERE id_eleccion = ? AND id_votante = ?";
+        
+        try (java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEleccion);
+            ps.setInt(2, idVotante);
+            
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    existe = true; // Si entra aquí, es porque encontró un voto previo
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al verificar doble voto: " + e.getMessage());
+        } finally {
+            modelo_conexion.ConexionDB.cerrarConexion(con);
+        }
+        
+        return existe;
+    }
+    
+    public java.util.Map<Integer, Integer> obtenerDatosVotos(int idEleccion) {
+        java.util.Map<Integer, Integer> datos = new java.util.HashMap<>();
+        java.sql.Connection con = modelo_conexion.ConexionDB.getConexion();
+        String sql = "SELECT id_candidato, COUNT(id_voto) as total FROM tb_voto WHERE id_eleccion = ? GROUP BY id_candidato";
+        try (java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEleccion);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.put(rs.getInt("id_candidato"), rs.getInt("total"));
+            }
+        }
+        } catch (java.sql.SQLException e) {
+        e.printStackTrace();
+        } finally {
+        modelo_conexion.ConexionDB.cerrarConexion(con);
+        }
+        return datos;
+    }
+    
+
+    
 }

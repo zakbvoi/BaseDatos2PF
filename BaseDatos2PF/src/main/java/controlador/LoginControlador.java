@@ -39,6 +39,7 @@ public class LoginControlador {
 
             if (username.equals("admin")) {
                 FrmAdmin vistaAdmin = new FrmAdmin();
+                new AdminControlador(vistaAdmin); // <-- Solo agregamos esta línea
                 vistaAdmin.setVisible(true);
             } else {
                 FrmVotacion vistaVotacion = new FrmVotacion();
