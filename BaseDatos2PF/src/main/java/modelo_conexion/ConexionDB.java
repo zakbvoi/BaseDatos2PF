@@ -8,9 +8,9 @@ public class ConexionDB {
     
     // Cadena de conexión estándar para Oracle XE. 
     // Ajusta "localhost" o "1521" si tu configuración de red o Docker es distinta.
-    private static final String URL = "jdbc:oracle:thin:@localhost:1521:XE"; 
-    private static final String USER = "electoral_voting_owner";
-    private static final String PASSWORD = "Password_Segura!";
+    private static final String URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1"; 
+    private static final String USER = "SYSTEM";
+    private static final String PASSWORD = "123456";
 
     // Método estático para obtener la conexión
     public static Connection getConexion() {

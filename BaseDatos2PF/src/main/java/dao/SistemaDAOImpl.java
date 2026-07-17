@@ -96,4 +96,79 @@ public class SistemaDAOImpl {
         
         return exito;
     }
+    
+    /**
+     * Registra un nuevo elector en el sistema.
+     * Retorna true si se guardó con éxito, false si hubo un error (ej. usuario duplicado).
+     */
+    public boolean registrarUsuario(String username, String password) {
+        boolean exito = false;
+        Connection con = ConexionDB.getConexion();
+        
+        // Usamos un INSERT básico para guardar al nuevo elector
+        String sql = "INSERT INTO tb_user_account (username, password_hash) VALUES (?, ?)";
+        
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, username);
+            ps.setString(2, password);
+            
+            int filasAfectadas = ps.executeUpdate();
+            
+            if (filasAfectadas > 0) {
+                exito = true;
+                System.out.println("Nuevo elector registrado con éxito: " + username);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al registrar el elector: " + e.getMessage());
+            // Si el error es por usuario duplicado (violación de UNIQUE), caerá aquí
+        } finally {
+            ConexionDB.cerrarConexion(con);
+        }
+        
+        return exito;
+    }
+    
+    /**
+     * 4. Obtiene el conteo de votos de una elección específica.
+     */
+    public String obtenerResultados(int idEleccion) {
+        StringBuilder resultados = new StringBuilder();
+        resultados.append("Resultados de la Elección ID: ").append(idEleccion).append("\n");
+        resultados.append("------------------------------------------------\n");
+        
+        java.sql.Connection con = modelo_conexion.ConexionDB.getConexion();
+        
+        String sql = "SELECT id_candidato, COUNT(id_voto) AS total_votos " +
+                     "FROM tb_voto " +
+                     "WHERE id_eleccion = ? " +
+                     "GROUP BY id_candidato " +
+                     "ORDER BY total_votos DESC";
+                     
+        try (java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEleccion);
+            
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                boolean hayVotos = false;
+                while (rs.next()) {
+                    hayVotos = true;
+                    int candidato = rs.getInt("id_candidato");
+                    int votos = rs.getInt("total_votos");
+                    resultados.append("Candidato ID [").append(candidato).append("] : ")
+                              .append(votos).append(" votos\n");
+                }
+                if (!hayVotos) {
+                    resultados.append("Aún no hay votos registrados para esta elección.");
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al obtener resultados: " + e.getMessage());
+            return "Ocurrió un error al calcular los resultados.";
+        } finally {
+            modelo_conexion.ConexionDB.cerrarConexion(con);
+        }
+        
+        return resultados.toString();
+    }
 }

@@ -1,64 +1,66 @@
 package controlador;
 
 import dao.SistemaDAOImpl;
-import modelo.Usuario;
 import vista.FrmLogin;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import vista.FrmAdmin;
+import vista.FrmVotacion;
+import vista.FrmRegistro;
+import vista.FrmResultados; // Importamos la nueva vista
 import javax.swing.JOptionPane;
-import vista.FrmAdmin; // Para la navegación
 
-public class LoginControlador implements ActionListener {
-    
-    private Usuario modeloUsuario;
-    private FrmLogin vistaLogin;
+public class LoginControlador {
+
+    private FrmLogin vista;
     private SistemaDAOImpl dao;
 
-    // Constructor: Recibe el modelo, la vista y el DAO para conectarlos
-    public LoginControlador(Usuario modeloUsuario, FrmLogin vistaLogin, SistemaDAOImpl dao) {
-        this.modeloUsuario = modeloUsuario;
-        this.vistaLogin = vistaLogin;
-        this.dao = dao;
-        
-        // Le decimos al botón "Ingresar" que este controlador escuchará sus clics
-        this.vistaLogin.getBtnIngresar().addActionListener(this);
+    public LoginControlador(FrmLogin vista) {
+        this.vista = vista;
+        this.dao = new SistemaDAOImpl();
+
+        // Conectamos los 3 botones
+        this.vista.btnIngresar.addActionListener(e -> procesarLogin());
+        this.vista.btnRegistrar.addActionListener(e -> abrirRegistro());
+        this.vista.btnVerResultados.addActionListener(e -> abrirResultados());
     }
 
-    // Este método se ejecuta automáticamente cuando hacen clic en el botón
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        // Si el botón presionado es el de ingresar...
-        if (e.getSource() == vistaLogin.getBtnIngresar()) {
-            
-            // 1. Extraemos los datos de la Vista
-            String username = vistaLogin.getTxtUsuario().getText();
-            String password = new String(vistaLogin.getTxtPassword().getPassword());
-            
-            // 2. Validamos que no estén vacíos
-            if (username.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(vistaLogin, "Por favor, complete todos los campos.", "Error", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            // 3. Guardamos los datos en el Modelo
-            modeloUsuario.setUsername(username);
-            modeloUsuario.setPassword(password);
-            
-            // 4. Se los pasamos al DAO para consultar a Oracle
-            boolean esValido = dao.validarLogin(modeloUsuario.getUsername(), modeloUsuario.getPassword());
-            
-            // 5. Respondemos en la Vista
-            if (esValido) {
-                JOptionPane.showMessageDialog(vistaLogin, "¡Bienvenido al Sistema de Votación!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                
-                // Navegación: Cerramos el Login y abrimos el FrmAdmin
-                vistaLogin.dispose();
-                FrmAdmin admin = new FrmAdmin();
-                admin.setVisible(true);
-                
-            } else {
-                JOptionPane.showMessageDialog(vistaLogin, "Usuario o contraseña incorrectos.", "Acceso Denegado", JOptionPane.ERROR_MESSAGE);
-            }
+    private void procesarLogin() {
+        String username = vista.getTxtUsername();
+        String password = vista.getTxtPassword();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(vista, "Llene todos los campos.", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+
+        boolean esValido = dao.validarLogin(username, password);
+
+        if (esValido) {
+            vista.dispose();
+
+            if (username.equals("admin")) {
+                FrmAdmin vistaAdmin = new FrmAdmin();
+                vistaAdmin.setVisible(true);
+            } else {
+                FrmVotacion vistaVotacion = new FrmVotacion();
+                new VotacionControlador(vistaVotacion); 
+                vistaVotacion.setVisible(true);
+            }
+        } else {
+            JOptionPane.showMessageDialog(vista, "Credenciales incorrectas.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void abrirRegistro() {
+        vista.dispose(); 
+        FrmRegistro vistaRegistro = new FrmRegistro();
+        new RegistroControlador(vistaRegistro); 
+        vistaRegistro.setVisible(true);
+    }
+    
+    // Método para abrir la ventana de resultados
+    private void abrirResultados() {
+        FrmResultados vistaResultados = new FrmResultados();
+        new ResultadosControlador(vistaResultados);
+        vistaResultados.setVisible(true);
     }
 }
