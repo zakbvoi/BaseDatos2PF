@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class VotacionControlador {
+    
     private FrmVotacion vista;
     private SistemaDAOImpl dao;
 
@@ -48,6 +49,22 @@ public class VotacionControlador {
     }
 
     private void procesarVoto() {
+        String idEleccionStr = vista.getTxtIdEleccion();
+        String idVotanteStr = vista.getTxtIdVotante();
+        String idCandidatoStr = vista.getTxtIdCandidato();
+
+        // -------------------------------------------------------------------
+        // MEJORA 1: Validación estricta de DNI
+        // La expresión "\\d{8}" significa: estrictamente 8 caracteres numéricos
+        // -------------------------------------------------------------------
+        if (!idVotanteStr.matches("\\d{8}")) {
+            JOptionPane.showMessageDialog(vista, 
+                "El ID Votante debe ser un DNI válido de exactamente 8 dígitos.", 
+                "DNI Inválido", 
+                JOptionPane.WARNING_MESSAGE);
+            return; // Cortamos la ejecución inmediatamente si no cumple
+        }
+
         try {
             Eleccion eleccion = vista.getSelectedEleccion();
             Candidato candidato = vista.getSelectedCandidato();
