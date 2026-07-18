@@ -449,4 +449,31 @@ public class SistemaDAOImpl {
         }
         return exito;
     }
+
+    /**
+     * Obtiene los datos de los votos para generar un gráfico.
+     */
+    public java.util.Map<Integer, Integer> obtenerDatosVotos(int idEleccion) {
+        java.util.Map<Integer, Integer> datos = new java.util.HashMap<>();
+        Connection con = ConexionDB.getConexion();
+        
+        String sql = "SELECT id_candidato, COUNT(id_voto) AS total_votos " +
+                     "FROM tb_voto " +
+                     "WHERE id_eleccion = ? " +
+                     "GROUP BY id_candidato";
+                     
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.put(rs.getInt("id_candidato"), rs.getInt("total_votos"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener datos de votos para gráfico: " + e.getMessage());
+        } finally {
+            ConexionDB.cerrarConexion(con);
+        }
+        return datos;
+    }
 }

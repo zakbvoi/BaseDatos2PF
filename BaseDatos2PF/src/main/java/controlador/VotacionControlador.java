@@ -49,9 +49,7 @@ public class VotacionControlador {
     }
 
     private void procesarVoto() {
-        String idEleccionStr = vista.getTxtIdEleccion();
         String idVotanteStr = vista.getTxtIdVotante();
-        String idCandidatoStr = vista.getTxtIdCandidato();
 
         // -------------------------------------------------------------------
         // MEJORA 1: Validación estricta de DNI
