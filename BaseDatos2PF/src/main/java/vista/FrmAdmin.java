@@ -1,19 +1,24 @@
 package vista;
 
-import dao.SistemaDAOImpl;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class FrmAdmin extends JFrame {
 
-    private JTextField txtIdEleccion;
-    private JButton btnPublicar;
+    public JTextField txtIdEleccion;
+    public JButton btnPublicar;
+    public JButton btnCerrarEleccion;
+    
+    // Botones de navegación
+    public JButton btnGestionarElecciones;
+    public JButton btnGestionarVotantes;
+    public JButton btnGestionarCandidatos;
+    public JButton btnVerAuditorias;
+    public JButton btnLogout;
 
     public FrmAdmin() {
         setTitle("Sistema de Votación - Panel de Administración");
-        setSize(400, 150);
+        setSize(550, 350);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -22,63 +27,42 @@ public class FrmAdmin extends JFrame {
     }
 
     private void initComponents() {
-        JPanel panelPrincipal = new JPanel();
-        panelPrincipal.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panelPrincipal.setLayout(new GridLayout(2, 2, 10, 15));
+        // Panel izquierdo: Botones de Gestión
+        JPanel panelIzquierdo = new JPanel(new GridLayout(4, 1, 10, 10));
+        panelIzquierdo.setBorder(BorderFactory.createTitledBorder("Módulos de Gestión"));
 
-        // Componentes
-        panelPrincipal.add(new JLabel("ID Elección a publicar:"));
+        btnGestionarElecciones = new JButton("Gestionar Elecciones");
+        btnGestionarVotantes = new JButton("Gestionar Votantes (Padrón)");
+        btnGestionarCandidatos = new JButton("Gestionar Candidatos");
+        btnVerAuditorias = new JButton("Ver Panel de Auditoría");
+
+        panelIzquierdo.add(btnGestionarElecciones);
+        panelIzquierdo.add(btnGestionarVotantes);
+        panelIzquierdo.add(btnGestionarCandidatos);
+        panelIzquierdo.add(btnVerAuditorias);
+
+        // Panel derecho: Acciones directas sobre elecciones (Publicar/Cerrar)
+        JPanel panelDerecho = new JPanel(new GridLayout(5, 1, 10, 10));
+        panelDerecho.setBorder(BorderFactory.createTitledBorder("Control del Proceso"));
+
+        panelDerecho.add(new JLabel("ID Elección:"));
         txtIdEleccion = new JTextField();
-        panelPrincipal.add(txtIdEleccion);
+        panelDerecho.add(txtIdEleccion);
 
-        panelPrincipal.add(new JLabel()); // Espacio vacío para alinear el botón
         btnPublicar = new JButton("Publicar Elección");
-        panelPrincipal.add(btnPublicar);
+        btnCerrarEleccion = new JButton("Cerrar Elección");
+        btnLogout = new JButton("Cerrar Sesión");
+
+        panelDerecho.add(btnPublicar);
+        panelDerecho.add(btnCerrarEleccion);
+        panelDerecho.add(btnLogout);
+
+        // Layout principal
+        JPanel panelPrincipal = new JPanel(new GridLayout(1, 2, 15, 15));
+        panelPrincipal.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        panelPrincipal.add(panelIzquierdo);
+        panelPrincipal.add(panelDerecho);
 
         add(panelPrincipal);
-
-        // Acción del botón
-        btnPublicar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                publicarEleccion();
-            }
-        });
-    }
-
-    private void publicarEleccion() {
-        try {
-            // 1. Recoger el ID ingresado
-            int idEleccion = Integer.parseInt(txtIdEleccion.getText());
-
-            // 2. Llamar al DAO
-            SistemaDAOImpl dao = new SistemaDAOImpl();
-            boolean exito = dao.publicarEleccion(idEleccion);
-
-            // 3. Evaluar respuesta
-            if (exito) {
-                JOptionPane.showMessageDialog(this, 
-                    "¡La elección " + idEleccion + " ha sido publicada y está lista para recibir votos!", 
-                    "Publicación Exitosa", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                txtIdEleccion.setText(""); // Limpiar el campo
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "Error al publicar. Verifica que la elección exista y cumpla los requisitos.", 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Por favor, ingresa un número válido.", "Error de formato", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new FrmAdmin().setVisible(true);
-            }
-        });
     }
 }

@@ -1,8 +1,11 @@
 package controlador;
 
 import dao.SistemaDAOImpl;
+import modelo.Eleccion;
+import modelo.Candidato;
 import vista.FrmVotacion;
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import java.util.List;
 
 public class VotacionControlador {
     private FrmVotacion vista;
@@ -12,26 +15,90 @@ public class VotacionControlador {
         this.vista = vista;
         this.dao = new SistemaDAOImpl();
 
-        // Escuchamos el botón desde aquí
+        // Cargar elecciones activas inicialmente
+        cargarElecciones();
+
+        // Enlazar cambio de elección para cargar candidatos
+        this.vista.cmbEleccion.addActionListener(e -> cargarCandidatos());
+
+        // Enlazar botones
         this.vista.btnVotar.addActionListener(e -> procesarVoto());
+        this.vista.btnVolver.addActionListener(e -> this.vista.dispose());
+    }
+
+    private void cargarElecciones() {
+        vista.cmbEleccion.removeAllItems();
+        List<Eleccion> elecciones = dao.listarEleccionesActivas();
+        for (Eleccion el : elecciones) {
+            vista.cmbEleccion.addItem(el);
+        }
+        // Disparar carga de candidatos inicial
+        cargarCandidatos();
+    }
+
+    private void cargarCandidatos() {
+        vista.cmbCandidato.removeAllItems();
+        Eleccion seleccionada = vista.getSelectedEleccion();
+        if (seleccionada != null) {
+            List<Candidato> candidatos = dao.listarCandidatosPorEleccion(seleccionada.getIdEleccion());
+            for (Candidato cand : candidatos) {
+                vista.cmbCandidato.addItem(cand);
+            }
+        }
     }
 
     private void procesarVoto() {
         try {
-            int idEleccion = Integer.parseInt(vista.getTxtIdEleccion());
-            int idVotante = Integer.parseInt(vista.getTxtIdVotante());
-            int idCandidato = Integer.parseInt(vista.getTxtIdCandidato());
+            Eleccion eleccion = vista.getSelectedEleccion();
+            Candidato candidato = vista.getSelectedCandidato();
+            String votanteStr = vista.getTxtIdVotante();
 
-            String comprobante = dao.registrarVoto(idEleccion, idVotante, idCandidato);
+            if (eleccion == null) {
+                JOptionPane.showMessageDialog(vista, "No hay elecciones activas seleccionadas.");
+                return;
+            }
+            if (candidato == null) {
+                JOptionPane.showMessageDialog(vista, "Seleccione un candidato.");
+                return;
+            }
+            if (votanteStr.isEmpty()) {
+                JOptionPane.showMessageDialog(vista, "Ingrese su ID de Votante.");
+                return;
+            }
 
-            if (comprobante != null && !comprobante.startsWith("ERROR")) {
-                JOptionPane.showMessageDialog(vista, "¡Voto exitoso!\nComprobante: " + comprobante);
-                vista.btnVotar.setEnabled(false);
-            } else {
-                JOptionPane.showMessageDialog(vista, "Error al registrar el voto.");
+            int idVotante = Integer.parseInt(votanteStr);
+
+            // Regla R-30: Confirmar o cancelar voto antes del envío
+            int confirm = JOptionPane.showConfirmDialog(
+                vista,
+                "¿Está seguro de su voto para el candidato " + candidato.getNombreCompleto() + "?\nEsta acción es irreversible.",
+                "Confirmación de Voto",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                String comprobante = dao.registrarVoto(eleccion.getIdEleccion(), idVotante, candidato.getIdCandidato());
+
+                if (comprobante != null && !comprobante.startsWith("ERROR")) {
+                    JOptionPane.showMessageDialog(
+                        vista,
+                        "¡Voto emitido con éxito!\n\nSu comprobante de votación único (Anónimo) es:\n" + comprobante,
+                        "Emisión de Voto Exitosa",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    vista.btnVotar.setEnabled(false);
+                } else {
+                    JOptionPane.showMessageDialog(
+                        vista, 
+                        "Error al registrar el voto. Verifique su elegibilidad o si ya votó previamente.", 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(vista, "Ingrese solo números.");
+            JOptionPane.showMessageDialog(vista, "El ID de votante debe ser un número entero.");
         }
     }
 }
